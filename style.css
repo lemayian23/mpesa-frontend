@@ -1,0 +1,140 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+}
+
+.container {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #555;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+input:focus {
+  border-color: #4f8cf7;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #3d8b40;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 15px;
+  display: none;
+}
+
+.status.info {
+  display: block;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status.success {
+  display: block;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status.error {
+  display: block;
+  background: #ffebee;
+  color: #c62828;
+}
+
+.transaction-info {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  font-size: 14px;
+  display: none;
+}
+
+.transaction-info.active {
+  display: block;
+}
+
+.transaction-info h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.transaction-info p {
+  margin: 6px 0;
+  color: #555;
+}
+
+.transaction-info .label {
+  font-weight: bold;
+  color: #333;
+}
+
+.receipt {
+  color: #2e7d32;
+  font-weight: bold;
+}
