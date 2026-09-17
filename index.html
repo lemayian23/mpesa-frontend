@@ -3,37 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>M-Pesa Payment</title>
+  <title>Olekirionki Enterprises - Pay via M-Pesa</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="container">
-    <h1>M-Pesa Payment</h1>
-    <p class="subtitle">Enter your details to pay via M-Pesa</p>
 
-    <form id="paymentForm">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span class="logo-icon">OE</span>
+      </div>
+      <h1>Olekirionki Enterprises</h1>
+      <p class="tagline">Pay securely via M-Pesa</p>
+    </div>
+
+    <!-- Till Number Display -->
+    <div class="till-display">
+      <span class="till-label">Till Number</span>
+      <span class="till-number">1723258</span>
+    </div>
+
+    <!-- Payment Form -->
+    <form id="paymentForm" class="payment-form">
+
+      <!-- Phone -->
       <div class="form-group">
         <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" placeholder="2547XXXXXXXX" required>
+        <input
+          type="tel"
+          id="phone"
+          placeholder="2547XXXXXXXX"
+          maxlength="12"
+          required
+        >
+        <p class="hint">Enter your M-Pesa registered phone number</p>
       </div>
 
+      <!-- Amount -->
       <div class="form-group">
         <label for="amount">Amount (KES)</label>
-        <input type="number" id="amount" placeholder="100" min="1" required>
+        <input
+          type="number"
+          id="amount"
+          placeholder="0"
+          min="1"
+          required
+        >
       </div>
 
+      <!-- Quick Select -->
+      <div class="quick-select">
+        <button type="button" class="quick-btn" data-amount="500">KES 500</button>
+      </div>
+
+      <!-- Reference -->
       <div class="form-group">
-        <label for="reference">Account Reference</label>
-        <input type="text" id="reference" placeholder="INV-001" value="INV-001">
+        <label for="reference">Reference (Optional)</label>
+        <input
+          type="text"
+          id="reference"
+          placeholder="e.g., INV-001"
+        >
       </div>
 
-      <button type="submit" id="payBtn">Pay Now</button>
+      <!-- Pay Button -->
+      <button type="submit" id="payBtn" class="pay-btn">
+        Pay KES 0
+      </button>
+
     </form>
 
+    <!-- Status Area -->
     <div id="status" class="status"></div>
 
-    <div id="transactionInfo" class="transaction-info"></div>
+    <!-- Receipt Area -->
+    <div id="receipt" class="receipt"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>🔒 Secured by Safaricom M-Pesa</p>
+    </div>
+
   </div>
 
   <script src="script.js"></script>
