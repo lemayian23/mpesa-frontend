@@ -1,43 +1,137 @@
-// Backend URL
-const API_URL = 'https://mpesa.lemayian.com';
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
-// Select elements
+const API_URL = 'https://mpesa.lemayian.com';
+const DEFAULT_AMOUNT = 500;
+
+
+// ============================================================
+// DOM ELEMENTS
+// ============================================================
+
 const form = document.getElementById('paymentForm');
 const phoneInput = document.getElementById('phone');
 const amountInput = document.getElementById('amount');
 const referenceInput = document.getElementById('reference');
 const payBtn = document.getElementById('payBtn');
 const statusDiv = document.getElementById('status');
-const transactionInfo = document.getElementById('transactionInfo');
+const receiptDiv = document.getElementById('receipt');
+const quickBtns = document.querySelectorAll('.quick-btn');
+
+
+// ============================================================
+// STATE
+// ============================================================
 
 let currentCheckoutId = null;
 let pollInterval = null;
 
-// Show status message
+
+// ============================================================
+// STATUS DISPLAY
+// ============================================================
+
 function showStatus(message, type) {
   statusDiv.textContent = message;
   statusDiv.className = `status ${type}`;
 }
 
-// Hide status
 function hideStatus() {
   statusDiv.className = 'status';
   statusDiv.textContent = '';
 }
 
-// Format phone number
+
+// ============================================================
+// RECEIPT DISPLAY
+// ============================================================
+
+function showReceipt(data) {
+  receiptDiv.innerHTML = `
+    <h3>Payment Receipt</h3>
+    <div class="receipt-row">
+      <span class="receipt-label">Receipt No:</span>
+      <span class="receipt-value receipt-code">${data.mpesa_receipt || '—'}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="receipt-label">Phone:</span>
+      <span class="receipt-value">${data.phone_number}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="receipt-label">Amount:</span>
+      <span class="receipt-value">KES ${data.amount}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="receipt-label">Status:</span>
+      <span class="receipt-value" style="color: #0a7a0a;">SUCCESS</span>
+    </div>
+  `;
+  receiptDiv.classList.add('active');
+}
+
+function hideReceipt() {
+  receiptDiv.classList.remove('active');
+  receiptDiv.innerHTML = '';
+}
+
+
+// ============================================================
+// PHONE FORMATTING
+// ============================================================
+
 function formatPhone(phone) {
-  phone = phone.replace(/\s+/g, '');
+  phone = phone.replace(/\s+/g, '').replace(/[^0-9]/g, '');
+
   if (phone.startsWith('0')) {
     phone = '254' + phone.slice(1);
   }
-  if (phone.startsWith('+')) {
+
+  if (phone.startsWith('+254')) {
     phone = phone.slice(1);
   }
+
+  if (phone.startsWith('7') || phone.startsWith('1')) {
+    phone = '254' + phone;
+  }
+
   return phone;
 }
 
-// Initiate payment
+
+// ============================================================
+// QUICK SELECT AMOUNTS
+// ============================================================
+
+quickBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const amount = btn.dataset.amount;
+    amountInput.value = amount;
+    updatePayButton();
+
+    // Visual feedback
+    quickBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+
+// ============================================================
+// UPDATE PAY BUTTON TEXT
+// ============================================================
+
+function updatePayButton() {
+  const amount = parseFloat(amountInput.value) || 0;
+  payBtn.textContent = `Pay KES ${amount.toLocaleString()}`;
+}
+
+amountInput.addEventListener('input', updatePayButton);
+
+
+// ============================================================
+// INITIATE PAYMENT
+// ============================================================
+
 async function initiatePayment(phone, amount, reference) {
   const response = await fetch(`${API_URL}/api/payments/pay`, {
     method: 'POST',
@@ -45,7 +139,7 @@ async function initiatePayment(phone, amount, reference) {
     body: JSON.stringify({
       phone_number: phone,
       amount: amount,
-      account_reference: reference,
+      account_reference: reference || 'INV-001',
     }),
   });
 
@@ -57,38 +151,30 @@ async function initiatePayment(phone, amount, reference) {
   return response.json();
 }
 
-// Check transaction status
+
+// ============================================================
+// CHECK TRANSACTION STATUS
+// ============================================================
+
 async function checkTransaction(checkoutId) {
-  const response = await fetch(`${API_URL}/api/transactions/${checkoutId}`);
+  const response = await fetch(`${API_URL}/api/transactions/${checkoutId}`, {
+    headers: {
+      'x-api-key': 'k9x2mPqR7vN4wL8tY3bH6jF1sD5gA0cE'
+    }
+  });
+
   if (!response.ok) return null;
   return response.json();
 }
 
-// Display transaction details
-function displayTransaction(transaction) {
-  let html = `
-    <h3>Transaction Details</h3>
-    <p><span class="label">Status:</span> ${transaction.status}</p>
-    <p><span class="label">Phone:</span> ${transaction.phone_number}</p>
-    <p><span class="label">Amount:</span> KES ${transaction.amount}</p>
-  `;
 
-  if (transaction.mpesa_receipt) {
-    html += `<p><span class="label">Receipt:</span> <span class="receipt">${transaction.mpesa_receipt}</span></p>`;
-  }
+// ============================================================
+// POLLING
+// ============================================================
 
-  if (transaction.result_desc) {
-    html += `<p><span class="label">Message:</span> ${transaction.result_desc}</p>`;
-  }
-
-  transactionInfo.innerHTML = html;
-  transactionInfo.classList.add('active');
-}
-
-// Poll for status updates
 function startPolling(checkoutId) {
   let attempts = 0;
-  const maxAttempts = 30; // 30 * 3 seconds = 90 seconds
+  const maxAttempts = 30; // 30 * 3 = 90 seconds
 
   pollInterval = setInterval(async () => {
     attempts++;
@@ -100,25 +186,42 @@ function startPolling(checkoutId) {
       pollInterval = null;
 
       if (transaction.status === 'success') {
-        showStatus('Payment successful!', 'success');
+        showStatus('✅ Payment successful!', 'success');
+        showReceipt(transaction);
       } else {
-        showStatus('Payment failed. Please try again.', 'error');
+        showStatus('❌ Payment failed. Please try again.', 'error');
       }
 
-      displayTransaction(transaction);
-      payBtn.disabled = false;
-      payBtn.textContent = 'Pay Now';
+      resetButton();
     } else if (attempts >= maxAttempts) {
       clearInterval(pollInterval);
       pollInterval = null;
-      showStatus('Payment timed out. Please check your transactions.', 'error');
-      payBtn.disabled = false;
-      payBtn.textContent = 'Pay Now';
+      showStatus('⏱️ Payment timed out. Please check your M-Pesa messages.', 'error');
+      resetButton();
     }
   }, 3000);
 }
 
-// Handle form submit
+
+// ============================================================
+// BUTTON STATE
+// ============================================================
+
+function disableButton() {
+  payBtn.disabled = true;
+  payBtn.textContent = 'Processing...';
+}
+
+function resetButton() {
+  payBtn.disabled = false;
+  updatePayButton();
+}
+
+
+// ============================================================
+// FORM SUBMISSION
+// ============================================================
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -126,7 +229,7 @@ form.addEventListener('submit', async (event) => {
   const amount = parseFloat(amountInput.value);
   const reference = referenceInput.value.trim() || 'INV-001';
 
-  // Validate
+  // Validation
   if (!phone || phone.length !== 12) {
     showStatus('Please enter a valid phone number (2547XXXXXXXX)', 'error');
     return;
@@ -137,26 +240,46 @@ form.addEventListener('submit', async (event) => {
     return;
   }
 
-  // Reset
+  // Reset UI
   hideStatus();
-  transactionInfo.classList.remove('active');
-  payBtn.disabled = true;
-  payBtn.textContent = 'Processing...';
+  hideReceipt();
+  disableButton();
 
   try {
-    showStatus('Sending payment request...', 'info');
+    showStatus('📲 Sending payment request...', 'info');
 
     const result = await initiatePayment(phone, amount, reference);
     currentCheckoutId = result.checkout_request_id;
 
-    showStatus('Check your phone and enter your M-Pesa PIN.', 'info');
+    showStatus('📱 Check your phone and enter your M-Pesa PIN.', 'info');
 
-    // Start polling for status
     startPolling(currentCheckoutId);
 
   } catch (error) {
-    showStatus(`Error: ${error.message}`, 'error');
-    payBtn.disabled = false;
-    payBtn.textContent = 'Pay Now';
+    showStatus(`❌ Error: ${error.message}`, 'error');
+    resetButton();
   }
+});
+
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+
+amountInput.value = DEFAULT_AMOUNT;
+updatePayButton();
+
+// Auto-format phone on input
+phoneInput.addEventListener('input', (e) => {
+  let value = e.target.value.replace(/[^0-9]/g, '');
+
+  if (value.startsWith('0') && value.length > 1) {
+    value = '254' + value.slice(1);
+  }
+
+  if (value.length > 12) {
+    value = value.slice(0, 12);
+  }
+
+  e.target.value = value;
 });
